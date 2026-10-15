@@ -1,11 +1,14 @@
-import { defineContentScript } from 'wxt/utils/define-content-script';
 import { browser } from 'wxt/browser';
+import { defineContentScript } from 'wxt/utils/define-content-script';
 import { buildExpiredSearchUrl } from '@/utils/expired-search';
 import { RECENT_SEARCHES_MESSAGE } from '@/utils/recent-searches';
 import './style.css';
 
 export default defineContentScript({
-  matches: ['https://www.trademe.co.nz/Browse/SearchResults.aspx*', 'https://trademe.co.nz/Browse/SearchResults.aspx*'],
+  matches: [
+    'https://www.trademe.co.nz/Browse/SearchResults.aspx*',
+    'https://trademe.co.nz/Browse/SearchResults.aspx*',
+  ],
   main(ctx) {
     const params = new URLSearchParams(location.search);
     if (params.get('current') !== '0') return;
@@ -38,17 +41,19 @@ export default defineContentScript({
     }
     const cid = params.get('cid');
     // Keep a selected subcategory even when the native dropdown lists only top-level categories.
-    if (cid && cid !== '0' && ![...category.options].some(option => option.value === cid)) {
+    if (cid && cid !== '0' && ![...category.options].some((option) => option.value === cid)) {
       const option = document.createElement('option');
       option.value = cid;
       option.textContent = 'Current category';
       category.append(option);
     }
-    category.value = cid && [...category.options].some(option => option.value === cid) ? cid : 'all';
+    category.value =
+      cid && [...category.options].some((option) => option.value === cid) ? cid : 'all';
     category.setAttribute('aria-label', 'Category');
     const updateCategoryLabel = () => {
       const label = form.querySelector('.drop-label');
-      if (label) label.textContent = `in ${category.selectedOptions[0]?.text.toLowerCase() ?? 'all categories'}`;
+      if (label)
+        label.textContent = `in ${category.selectedOptions[0]?.text.toLowerCase() ?? 'all categories'}`;
     };
     updateCategoryLabel();
     category.addEventListener('change', updateCategoryLabel);
@@ -136,7 +141,10 @@ export default defineContentScript({
     });
     clearRecent.addEventListener('click', async () => {
       try {
-        const response = await browser.runtime.sendMessage({ type: RECENT_SEARCHES_MESSAGE, action: 'clear' });
+        const response = await browser.runtime.sendMessage({
+          type: RECENT_SEARCHES_MESSAGE,
+          action: 'clear',
+        });
         if (response?.error) throw new Error(response.error);
         if (!disposed) renderRecentSearches([]);
       } catch {
@@ -166,7 +174,8 @@ export default defineContentScript({
       emptyMessage = document.createElement('div');
       emptyMessage.className = 'trademe-plus-expired-empty';
       const message = document.createElement('p');
-      message.textContent = 'No expired listings found. Try different keywords in the search bar above.';
+      message.textContent =
+        'No expired listings found. Try different keywords in the search bar above.';
       emptyMessage.append(message);
 
       const broaderSearch = () => {

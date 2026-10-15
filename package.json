@@ -11,6 +11,11 @@
     "dev": "wxt",
     "build": "wxt build",
     "zip": "wxt zip",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "check": "biome check .",
+    "check:write": "biome check --write .",
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare"
   },
@@ -24,6 +29,7 @@
     }
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.1.5",

@@ -6,14 +6,16 @@ export default defineContentScript({
   // Start on the homepage too: SPA navigation does not inject new content scripts.
   matches: ['https://www.trademe.co.nz/*', 'https://trademe.co.nz/*'],
   main(ctx) {
-    let mounted: {
-      host: HTMLElement;
-      anchor: HTMLElement;
-      input: HTMLInputElement;
-      control: HTMLElement;
-      cleanup?: () => void;
-      updatePosition?: () => void;
-    } | undefined;
+    let mounted:
+      | {
+          host: HTMLElement;
+          anchor: HTMLElement;
+          input: HTMLInputElement;
+          control: HTMLElement;
+          cleanup?: () => void;
+          updatePosition?: () => void;
+        }
+      | undefined;
     let scheduled = false;
     let homepageExpired = false;
 
@@ -31,32 +33,40 @@ export default defineContentScript({
         return;
       }
 
-      let host = document.querySelector<HTMLElement>(homepage
-        ? 'tm-homepage-search-header tm-global-search'
-        : 'tm-marketplace-search-form');
+      let host = document.querySelector<HTMLElement>(
+        homepage ? 'tm-homepage-search-header tm-global-search' : 'tm-marketplace-search-form',
+      );
       const original = host?.querySelector<HTMLButtonElement>(
         homepage
           ? 'button.tm-global-search__search-form-submit-button[type="submit"]'
           : 'button.tm-marketplace-search-form__search-button[type="submit"]',
       );
-      let input = host?.querySelector<HTMLInputElement>(homepage
-        ? 'input.tm-global-search__search-input-box[name="search"]'
-        : 'input[name="keyword"]');
+      let input = host?.querySelector<HTMLInputElement>(
+        homepage
+          ? 'input.tm-global-search__search-input-box[name="search"]'
+          : 'input[name="keyword"]',
+      );
       let anchor: HTMLElement | null | undefined = original;
       if (!homepage && (!host || !original || !input)) {
         host = document.querySelector<HTMLElement>(
           'tm-search-header tm-refine-header .tm-refine-header__refine-keywords-and-save-search, ' +
-          'tm-search-header tm-refine-header .tm-refine-header__refine-keywords-and-save-search-column',
+            'tm-search-header tm-refine-header .tm-refine-header__refine-keywords-and-save-search-column',
         );
-        input = host?.querySelector<HTMLInputElement>('tm-refine-keywords input.tm-refine-keywords__search-input-box');
+        input = host?.querySelector<HTMLInputElement>(
+          'tm-refine-keywords input.tm-refine-keywords__search-input-box',
+        );
         anchor = host?.querySelector<HTMLElement>('tm-refine-keywords');
       }
       if (!host || !anchor || !input) {
         removeButton();
         return;
       }
-      if (mounted?.host === host && mounted.anchor === anchor &&
-          mounted.input === input && mounted.control.isConnected) {
+      if (
+        mounted?.host === host &&
+        mounted.anchor === anchor &&
+        mounted.input === input &&
+        mounted.control.isConnected
+      ) {
         mounted.updatePosition?.();
         return;
       }
@@ -103,8 +113,14 @@ export default defineContentScript({
           const bounds = original.getBoundingClientRect();
           toggle.style.left = `${bounds.left - width - 8}px`;
           toggle.style.top = `${bounds.top + (bounds.height - toggle.getBoundingClientRect().height) / 2}px`;
-          toggle.style.visibility = original.isConnected && bounds.width > 0 && bounds.height > 0 &&
-            bounds.bottom > 0 && bounds.top < window.innerHeight ? 'visible' : 'hidden';
+          toggle.style.visibility =
+            original.isConnected &&
+            bounds.width > 0 &&
+            bounds.height > 0 &&
+            bounds.bottom > 0 &&
+            bounds.top < window.innerHeight
+              ? 'visible'
+              : 'hidden';
         };
         const resizeObserver = new ResizeObserver(updatePosition);
         resizeObserver.observe(host);
@@ -113,20 +129,28 @@ export default defineContentScript({
         window.addEventListener('resize', updatePosition);
         window.addEventListener('scroll', updatePosition, true);
         updatePosition();
-        mounted = { host, anchor, input, control: toggle, updatePosition, cleanup: () => {
-          original.removeEventListener('click', interceptSearch, true);
-          form.removeEventListener('submit', interceptSearch, true);
-          keywordInput.removeEventListener('keydown', interceptEnter, true);
-          resizeObserver.disconnect();
-          window.removeEventListener('resize', updatePosition);
-          window.removeEventListener('scroll', updatePosition, true);
-        } };
+        mounted = {
+          host,
+          anchor,
+          input,
+          control: toggle,
+          updatePosition,
+          cleanup: () => {
+            original.removeEventListener('click', interceptSearch, true);
+            form.removeEventListener('submit', interceptSearch, true);
+            keywordInput.removeEventListener('keydown', interceptEnter, true);
+            resizeObserver.disconnect();
+            window.removeEventListener('resize', updatePosition);
+            window.removeEventListener('scroll', updatePosition, true);
+          },
+        };
         return;
       }
       // Keep Trade Me's classes and Angular style attributes, without its handlers.
-      const button = original && anchor === original
-        ? original.cloneNode(false) as HTMLButtonElement
-        : document.createElement('button');
+      const button =
+        original && anchor === original
+          ? (original.cloneNode(false) as HTMLButtonElement)
+          : document.createElement('button');
       if (anchor !== original) button.className = 'trademe-plus-results-expired-button';
       button.removeAttribute('id');
       button.removeAttribute('name');

@@ -25,8 +25,12 @@ h1 {
   background: #687589;
 }
 
-.status--attached .status-dot { background: #15803d; }
-.status--error .status-dot { background: #b91c1c; }
+.status--attached .status-dot {
+  background: #15803d;
+}
+.status--error .status-dot {
+  background: #b91c1c;
+}
 
 h2 {
   margin: 0;

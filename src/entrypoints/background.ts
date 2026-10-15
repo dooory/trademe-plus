@@ -1,6 +1,10 @@
-import { defineBackground } from 'wxt/utils/define-background';
 import { browser } from 'wxt/browser';
-import { RECENT_SEARCHES_KEY, RECENT_SEARCHES_MESSAGE, updateRecentSearches } from '@/utils/recent-searches';
+import { defineBackground } from 'wxt/utils/define-background';
+import {
+  RECENT_SEARCHES_KEY,
+  RECENT_SEARCHES_MESSAGE,
+  updateRecentSearches,
+} from '@/utils/recent-searches';
 
 export default defineBackground(() => {
   // All tabs share this worker. Queue complete read/modify/write operations,
@@ -8,9 +12,15 @@ export default defineBackground(() => {
   let pending: Promise<void> = Promise.resolve();
 
   browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-    if (sender.id !== browser.runtime.id || !message || typeof message !== 'object' ||
-        !('type' in message) || message.type !== RECENT_SEARCHES_MESSAGE ||
-        !('action' in message)) return;
+    if (
+      sender.id !== browser.runtime.id ||
+      !message ||
+      typeof message !== 'object' ||
+      !('type' in message) ||
+      message.type !== RECENT_SEARCHES_MESSAGE ||
+      !('action' in message)
+    )
+      return;
 
     const action = message.action;
     const keyword = 'keyword' in message ? message.keyword : undefined;
@@ -28,9 +38,12 @@ export default defineBackground(() => {
       return searches;
     });
     // A failed storage operation must not block later requests.
-    pending = operation.then(() => {}, () => {});
+    pending = operation.then(
+      () => {},
+      () => {},
+    );
     void operation.then(
-      searches => sendResponse({ searches }),
+      (searches) => sendResponse({ searches }),
       () => sendResponse({ error: 'Unable to update recent searches' }),
     );
     // Keep the message channel and worker alive until the operation completes.

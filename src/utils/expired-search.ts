@@ -3,8 +3,12 @@ export function isHomepagePath(pathname: string): boolean {
 }
 
 export function isMarketplacePath(pathname: string): boolean {
-  return pathname === '/a/marketplace' || pathname.startsWith('/a/marketplace/') ||
-    pathname === '/a/search' || pathname === '/a/search/';
+  return (
+    pathname === '/a/marketplace' ||
+    pathname.startsWith('/a/marketplace/') ||
+    pathname === '/a/search' ||
+    pathname === '/a/search/'
+  );
 }
 
 export function buildExpiredSearchUrl(keyword: string, currentParams?: URLSearchParams): string {

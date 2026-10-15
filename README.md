@@ -32,11 +32,14 @@ Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, 
 ## Check your work
 
 ```sh
+npm run check
 npm run compile
 npm run build
 node scripts/check-expired-navigation.mjs
 node scripts/check-expired-results.mjs
 ```
+
+Biome formats and lints the JavaScript, TypeScript, CSS, and JSON files it supports. Run `npm run format` to format files, `npm run lint` to report lint issues, or `npm run check:write` to apply formatting and safe fixes. `npm run compile` remains the TypeScript type check.
 
 These commands check TypeScript and build the extension. Check browser behavior manually:
 
