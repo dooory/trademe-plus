@@ -2,7 +2,9 @@
 
 A Chrome extension for [Trade Me](https://www.trademe.co.nz), built from the official [WXT React template](https://wxt.dev/guide/installation) with TypeScript.
 
-The popup reports whether the active tab is on `trademe.co.nz` or one of its subdomains. "Attached" currently means the tab URL matches Trade Me. The extension does not modify pages yet.
+Included features:
+
+- Search expired Trade Me Marketplace listings using your current keywords.
 
 ## Install and run
 
@@ -28,6 +30,7 @@ Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, 
 ```sh
 npm run compile
 npm run build
+node scripts/check-expired-navigation.mjs
 ```
 
 These commands check TypeScript and build the extension. Check browser behavior manually:
@@ -36,6 +39,10 @@ These commands check TypeScript and build the extension. Check browser behavior 
 2. Open an unrelated website and reopen the popup. Expect **Not attached to Trade Me**.
 3. Open a Chrome internal page such as `chrome://extensions` and reopen the popup. Expect **Not attached to Trade Me**.
 4. Switch between the tabs and reopen the popup to confirm it checks the active tab each time.
+5. Open `https://www.trademe.co.nz/a/marketplace`. Expect one **Search expired listings** button beside **Search Marketplace**, with matching styling. Enter `Lego Blocks` in **Search by keyword** and click the new button. Expect `https://www.trademe.co.nz/Browse/SearchResults.aspx?advanced=true&searchstring=Lego+Blocks&current=0`.
+6. Repeat with special characters such as `LEGO + trains & tracks` to check URL encoding. An empty keyword opens expired results with an empty search string.
+7. Check the layout at desktop and mobile widths. Confirm the original button and Enter still perform the normal Marketplace search.
+8. Start at `https://www.trademe.co.nz/` and navigate into Marketplace without reloading. Expect the new button immediately. Navigate between Marketplace and Property, Motors, Jobs, and Services, including without reloading. Expect the new button only on Marketplace forms, with no duplicates after returning or using Back/Forward.
 
 For popup errors, right-click inside the popup and choose **Inspect**. Check the extension card at `chrome://extensions` for other errors. There is no automated browser test suite yet.
 
@@ -45,7 +52,9 @@ For popup errors, right-click inside the popup and choose **Inspect**. Check the
 
 ```text
 src/
+  entrypoints/expired-search.content/  Marketplace button, layout, and navigation handling
   entrypoints/popup/   React popup, HTML entrypoint, and styles
+  utils/expired-search.ts  Marketplace path matching and expired search URL
   utils/trademe.ts     Trade Me URL matching
 wxt.config.ts         WXT configuration and manifest permissions
 ```
@@ -54,4 +63,4 @@ wxt.config.ts         WXT configuration and manifest permissions
 
 Add future page integration as a WXT content script under `src/entrypoints/`, with matches limited to Trade Me. Keep shared logic in `src/utils/` and UI code with its entrypoint. WXT generates `manifest.json`; edit `wxt.config.ts` rather than the generated file.
 
-The popup uses only `activeTab`, which allows reading the current tab URL when you open it. It does not request permanent access to your browsing history or page contents. See the [WXT guide](https://wxt.dev/guide/essentials/entrypoints) for entrypoint conventions.
+The popup uses `activeTab` to read the current tab URL when opened. The content script runs on `https://www.trademe.co.nz/*` and `https://trademe.co.nz/*` so it can handle navigation into Marketplace from the homepage or other sections, but only modifies Marketplace search forms. It reads the keyword when you click the new button and redirects directly to Trade Me. See the [WXT guide](https://wxt.dev/guide/essentials/entrypoints) for entrypoint conventions.
