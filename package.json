@@ -2,7 +2,7 @@
   "name": "trademe-plus",
   "description": "A Chrome extension for Trade Me, built with WXT and React.",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"
