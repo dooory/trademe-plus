@@ -9,6 +9,6 @@ export default defineConfig({
   manifest: {
     name: 'Trade Me Plus',
     description: 'Adds expired listing search to Trade Me Marketplace and shows the active tab connection status.',
-    permissions: ['activeTab'],
+    permissions: ['activeTab', 'storage'],
   },
 });

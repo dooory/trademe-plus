@@ -1,5 +1,5 @@
 import { defineContentScript } from 'wxt/utils/define-content-script';
-import { buildExpiredSearchUrl, isMarketplacePath } from '@/utils/expired-search';
+import { buildExpiredSearchUrl, isHomepagePath, isMarketplacePath } from '@/utils/expired-search';
 import './style.css';
 
 export default defineContentScript({
@@ -8,39 +8,126 @@ export default defineContentScript({
   main(ctx) {
     let mounted: {
       host: HTMLElement;
-      original: HTMLButtonElement;
+      anchor: HTMLElement;
       input: HTMLInputElement;
-      button: HTMLButtonElement;
+      control: HTMLElement;
+      cleanup?: () => void;
+      updatePosition?: () => void;
     } | undefined;
     let scheduled = false;
+    let homepageExpired = false;
 
     function removeButton() {
-      mounted?.button.remove();
+      mounted?.cleanup?.();
+      mounted?.control.remove();
       mounted?.host.removeAttribute('data-trademe-plus-expired-search');
       mounted = undefined;
     }
 
     function syncButton() {
-      if (!isMarketplacePath(location.pathname)) {
+      const homepage = isHomepagePath(location.pathname);
+      if (!homepage && !isMarketplacePath(location.pathname)) {
         removeButton();
         return;
       }
 
-      const host = document.querySelector<HTMLElement>('tm-marketplace-search-form');
+      let host = document.querySelector<HTMLElement>(homepage
+        ? 'tm-homepage-search-header tm-global-search'
+        : 'tm-marketplace-search-form');
       const original = host?.querySelector<HTMLButtonElement>(
-        'button.tm-marketplace-search-form__search-button[type="submit"]',
+        homepage
+          ? 'button.tm-global-search__search-form-submit-button[type="submit"]'
+          : 'button.tm-marketplace-search-form__search-button[type="submit"]',
       );
-      const input = host?.querySelector<HTMLInputElement>('input[name="keyword"]');
-      if (!host || !original || !input) {
+      let input = host?.querySelector<HTMLInputElement>(homepage
+        ? 'input.tm-global-search__search-input-box[name="search"]'
+        : 'input[name="keyword"]');
+      let anchor: HTMLElement | null | undefined = original;
+      if (!homepage && (!host || !original || !input)) {
+        host = document.querySelector<HTMLElement>(
+          'tm-search-header tm-refine-header .tm-refine-header__refine-keywords-and-save-search, ' +
+          'tm-search-header tm-refine-header .tm-refine-header__refine-keywords-and-save-search-column',
+        );
+        input = host?.querySelector<HTMLInputElement>('tm-refine-keywords input.tm-refine-keywords__search-input-box');
+        anchor = host?.querySelector<HTMLElement>('tm-refine-keywords');
+      }
+      if (!host || !anchor || !input) {
         removeButton();
         return;
       }
-      if (mounted?.host === host && mounted.original === original &&
-          mounted.input === input && mounted.button.isConnected) return;
+      if (mounted?.host === host && mounted.anchor === anchor &&
+          mounted.input === input && mounted.control.isConnected) {
+        mounted.updatePosition?.();
+        return;
+      }
 
       removeButton();
+      if (homepage && original) {
+        const form = original.form;
+        if (!form) return;
+        // Keep extension UI out of Angular's component tree and native form.
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'trademe-plus-expired-toggle';
+        toggle.setAttribute('role', 'switch');
+        toggle.setAttribute('aria-checked', String(homepageExpired));
+        const track = document.createElement('span');
+        track.className = 'trademe-plus-expired-toggle__track';
+        track.setAttribute('aria-hidden', 'true');
+        const text = document.createElement('span');
+        text.textContent = 'Expired listings';
+        toggle.append(text, track);
+        toggle.addEventListener('click', () => {
+          homepageExpired = !homepageExpired;
+          toggle.setAttribute('aria-checked', String(homepageExpired));
+        });
+        const keywordInput = input;
+        const interceptSearch = (event: Event) => {
+          if (!homepageExpired || !isHomepagePath(location.pathname)) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          location.assign(buildExpiredSearchUrl(keywordInput.value));
+        };
+        const interceptEnter = (event: KeyboardEvent) => {
+          if (event.key === 'Enter' && !event.isComposing) interceptSearch(event);
+        };
+        // Capture before Trade Me's Angular search handlers, including its Enter shortcut.
+        original.addEventListener('click', interceptSearch, true);
+        form.addEventListener('submit', interceptSearch, true);
+        input.addEventListener('keydown', interceptEnter, true);
+        host.setAttribute('data-trademe-plus-expired-search', '');
+        toggle.style.visibility = 'hidden';
+        document.body.append(toggle);
+        const updatePosition = () => {
+          const width = toggle.getBoundingClientRect().width;
+          const bounds = original.getBoundingClientRect();
+          toggle.style.left = `${bounds.left - width - 8}px`;
+          toggle.style.top = `${bounds.top + (bounds.height - toggle.getBoundingClientRect().height) / 2}px`;
+          toggle.style.visibility = original.isConnected && bounds.width > 0 && bounds.height > 0 &&
+            bounds.bottom > 0 && bounds.top < window.innerHeight ? 'visible' : 'hidden';
+        };
+        const resizeObserver = new ResizeObserver(updatePosition);
+        resizeObserver.observe(host);
+        resizeObserver.observe(original);
+        resizeObserver.observe(toggle);
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition, true);
+        updatePosition();
+        mounted = { host, anchor, input, control: toggle, updatePosition, cleanup: () => {
+          original.removeEventListener('click', interceptSearch, true);
+          form.removeEventListener('submit', interceptSearch, true);
+          keywordInput.removeEventListener('keydown', interceptEnter, true);
+          resizeObserver.disconnect();
+          window.removeEventListener('resize', updatePosition);
+          window.removeEventListener('scroll', updatePosition, true);
+        } };
+        return;
+      }
       // Keep Trade Me's classes and Angular style attributes, without its handlers.
-      const button = original.cloneNode(false) as HTMLButtonElement;
+      const button = original && anchor === original
+        ? original.cloneNode(false) as HTMLButtonElement
+        : document.createElement('button');
+      if (anchor !== original) button.className = 'trademe-plus-results-expired-button';
       button.removeAttribute('id');
       button.removeAttribute('name');
       button.removeAttribute('form');
@@ -48,16 +135,17 @@ export default defineContentScript({
       button.type = 'button';
       button.textContent = 'Search expired listings';
       button.dataset.trademePlusExpiredButton = '';
+      const keywordInput = input;
       button.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
-        if (isMarketplacePath(location.pathname)) {
-          location.assign(buildExpiredSearchUrl(input.value));
+        if (isHomepagePath(location.pathname) || isMarketplacePath(location.pathname)) {
+          location.assign(buildExpiredSearchUrl(keywordInput.value));
         }
       });
       host.setAttribute('data-trademe-plus-expired-search', '');
-      original.after(button);
-      mounted = { host, original, input, button };
+      anchor.after(button);
+      mounted = { host, anchor, input, control: button };
     }
 
     const observer = new MutationObserver(() => {
