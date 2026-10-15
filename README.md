@@ -10,7 +10,16 @@ Included features:
 - Choose from your last 10 unique expired searches, saved locally in the extension, or clear the history.
 - Switch to current listings with the same keywords, selected category, filters, and sorting.
 
-## Install and run
+## Install the latest release
+
+1. Download the extension ZIP from the [latest GitHub release](https://github.com/dooory/trademe-plus/releases/latest).
+2. Extract the ZIP to a folder on your computer.
+3. Open `chrome://extensions` in Chrome and enable **Developer mode**.
+4. Click **Load unpacked** and select the extracted folder containing `manifest.json`.
+
+To update, download and extract the newer release, then click **Reload** on the extension card. If you extracted it to a new folder, remove the old extension first and load the new folder.
+
+## Run from source
 
 Install Node.js 22.12+ and Google Chrome, then run from the repository root:
 
@@ -19,15 +28,7 @@ npm ci
 npm run dev
 ```
 
-WXT opens a development browser with the extension installed and a Trade Me tab. Click Trade Me Plus in Chrome's extensions menu. Pin it for easier access. Keep the dev command running while you edit; WXT reloads changes.
-
-To install a production build locally:
-
-```sh
-npm run build
-```
-
-Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select `.output/chrome-mv3`. After rebuilding, click **Reload** on the extension card. `npm run zip` produces a ZIP in `.output/` for distribution.
+WXT opens a development browser with the extension installed and a Trade Me tab. Click Trade Me Plus in Chrome's extensions menu. Pin it for easier access. Keep the dev command running while you edit; WXT reloads changes. To create a production package, run `npm run zip`; WXT writes the extension ZIP to `.output/`.
 
 ## Check your work
 
