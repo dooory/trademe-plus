@@ -1,0 +1,46 @@
+.trademe-plus-expired-empty {
+  margin-bottom: 16px;
+}
+
+.trademe-plus-expired-empty a {
+  display: inline-block;
+  margin: 0 16px 8px 0;
+}
+
+.trademe-plus-expired-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.search-bar.trademe-plus-expired-results {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 16px;
+}
+
+.search-bar.trademe-plus-expired-results .search-bar-form {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+@media (max-width: 600px) {
+  .trademe-plus-expired-results .search-bar-form {
+    display: flex;
+    float: none;
+  }
+
+  .trademe-plus-expired-results .search-filters {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .trademe-plus-expired-results .main-search-control {
+    width: 100%;
+  }
+
+  .trademe-plus-expired-results .main-search-left input {
+    min-width: 0;
+  }
+}

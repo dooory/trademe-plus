@@ -5,6 +5,7 @@ A Chrome extension for [Trade Me](https://www.trademe.co.nz), built from the off
 Included features:
 
 - Search expired Trade Me Marketplace listings using your current keywords.
+- Search again from expired results with a prefilled search bar styled like Trade Me's existing yellow search bar.
 
 ## Install and run
 
@@ -31,6 +32,7 @@ Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, 
 npm run compile
 npm run build
 node scripts/check-expired-navigation.mjs
+node scripts/check-expired-results.mjs
 ```
 
 These commands check TypeScript and build the extension. Check browser behavior manually:
@@ -43,6 +45,8 @@ These commands check TypeScript and build the extension. Check browser behavior 
 6. Repeat with special characters such as `LEGO + trains & tracks` to check URL encoding. An empty keyword opens expired results with an empty search string.
 7. Check the layout at desktop and mobile widths. Confirm the original button and Enter still perform the normal Marketplace search.
 8. Start at `https://www.trademe.co.nz/` and navigate into Marketplace without reloading. Expect the new button immediately. Navigate between Marketplace and Property, Motors, Jobs, and Services, including without reloading. Expect the new button only on Marketplace forms, with no duplicates after returning or using Back/Forward.
+9. On expired results, expect a yellow search bar above the results with your current keywords. Change the keywords and submit using both Enter and the search button. Expect another expired search, retaining the selected category and region. Check desktop and mobile widths, and confirm current-listing results do not get this extra bar.
+10. Search for a term with no expired results. Expect the search bar to remain visible with a message suggesting different keywords. With a category or region filter applied, expect shortcuts to search all categories or all locations. Each shortcut keeps the keywords and the other filter, stays on expired listings, and starts from page 1.
 
 For popup errors, right-click inside the popup and choose **Inspect**. Check the extension card at `chrome://extensions` for other errors. There is no automated browser test suite yet.
 
@@ -52,6 +56,7 @@ For popup errors, right-click inside the popup and choose **Inspect**. Check the
 
 ```text
 src/
+  entrypoints/expired-results.content/ Prefilled expired-results search form and layout
   entrypoints/expired-search.content/  Marketplace button, layout, and navigation handling
   entrypoints/popup/   React popup, HTML entrypoint, and styles
   utils/expired-search.ts  Marketplace path matching and expired search URL
@@ -63,4 +68,4 @@ wxt.config.ts         WXT configuration and manifest permissions
 
 Add future page integration as a WXT content script under `src/entrypoints/`, with matches limited to Trade Me. Keep shared logic in `src/utils/` and UI code with its entrypoint. WXT generates `manifest.json`; edit `wxt.config.ts` rather than the generated file.
 
-The popup uses `activeTab` to read the current tab URL when opened. The content script runs on `https://www.trademe.co.nz/*` and `https://trademe.co.nz/*` so it can handle navigation into Marketplace from the homepage or other sections, but only modifies Marketplace search forms. It reads the keyword when you click the new button and redirects directly to Trade Me. See the [WXT guide](https://wxt.dev/guide/essentials/entrypoints) for entrypoint conventions.
+The popup uses `activeTab` to read the current tab URL when opened. The Marketplace content script runs on `https://www.trademe.co.nz/*` and `https://trademe.co.nz/*` so it can handle navigation into Marketplace from the homepage or other sections, but only modifies Marketplace search forms. It reads the keyword when you click the new button and redirects directly to Trade Me. A separate content script adds a prefilled search form on legacy expired results pages with `current=0`, reusing Trade Me's native search markup and styles. See the [WXT guide](https://wxt.dev/guide/essentials/entrypoints) for entrypoint conventions.
